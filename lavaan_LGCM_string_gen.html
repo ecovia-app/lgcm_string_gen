@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>lavaan Latent Growth Curve Model - String Generator</title>
+</head>
+
+<body>
+    <h1>lavaan Latent Growth Curve Model - String Generator</h1>
+
+    <label for="interceptMode">Select interceptMode:</label>
+    <select id="interceptMode">
+        <option value="fixed">Fixed</option>
+        <option value="random">Random</option>
+    </select>
+
+    <label for="slopeMode">Select slopeMode:</label>
+    <select id="slopeMode">
+        <option value="fixed">Fixed</option>
+        <option value="random">Random</option>
+    </select>
+
+    <br><br>
+
+    <label for="slopeShape">Select Slope Shape:</label>
+    <select id="slopeShape">
+        <option value="linear">Linear</option>
+        <option value="quadratic">Quadratic</option>
+        <option value="cubic">Cubic</option>
+        <option value="exponential">Exponential</option>
+        <option value="sigmoidal">Sigmoidal</option>
+    </select>
+
+    <br><br>
+
+    <label for="inputStr">Enter Outcome Name:</label>
+    <input type="text" id="inputStr">
+
+    <br><br>
+
+    <label for="inputNum">Enter Number Of Time Points:</label>
+    <input type="number" id="inputNum">
+
+    <br><br>
+
+    <label for="inputPredictors">Optional: Enter Predictor Names (x1 + ... + x3):</label>
+    <input type="text" id="inputPredictors">
+
+    <br><br>
+
+    <label for="inputCovariate">Optional: Enter Time-Varying Covariate Name:</label>
+    <input type="text" id="inputCovariate">
+
+    <br><br>
+
+    <button onclick="generateString()">Generate</button>
+
+    <br><br>
+
+    <h2>Output:</h2>
+    <p id="resultSlope"></p>
+
+    <script>
+        function createSlopeString(str, num, slopeMode, interceptMode, inputCovariate, slopeShape, inputPredictors) {
+            if (num <= 0) {
+                return "''";
+            }
+
+            let resultIntercept = "";
+            for (let i = 1; i <= num; i++) {
+                let termOne = interceptMode === "fixed" ? `1*${str}${i}` : `${i - 1}*${str}${i}`;
+
+                if (i == 1) {
+                    resultIntercept += termOne;
+                } else {
+                    resultIntercept += ` + ${termOne}`;
+                }
+            }
+
+
+            let resultSlope = "";
+            for (let i = 1; i <= num; i++) {
+                let termTwo = "";
+
+                if (slopeShape === "linear") {
+                    termTwo = slopeMode === "fixed" ? `1*${str}${i}` : `${i - 1}*${str}${i}`;
+                } else if (slopeShape === "cubic") {
+                    termTwo = slopeMode === "fixed" ? `anyone that knows the formula? yeah me neither` : `anyone that knows the formula? yeah me neither`;
+                } else if (slopeShape === "quadratic") {
+                    termTwo = slopeMode === "fixed" ? `1*${str}${i}^2` : `${i - 1}*${str}${i}^2`;
+                } else if (slopeShape === "exponential") {
+                    termTwo = slopeMode === "fixed" ? `exp(1*${str}${i})` : `exp(${i - 1}*${str}${i})`;
+                } else if (slopeShape === "sigmoidal") {
+                    termTwo = slopeMode === "fixed" ? `1/(1+1*exp(-${str}${i})` : `1/(1+ ${i - 1} *exp(-${str}${i})`;
+                } else {
+                    return "Invalid slopeShape";
+                }
+                
+
+                if (i == 1) {
+                    resultSlope += termTwo;
+                } else {
+                    resultSlope += ` + ${termTwo}`;
+                }
+            }
+
+            let resultCovariate = "";
+            if (inputCovariate.trim() != "") {
+                for (let i = 1; i <= num; i++) {
+                    if (i == 1) {
+                        resultCovariate += `#time-varying covariate<br>${str}${i} ~ ${inputCovariate}${i}<br>`;
+                    } else {
+                        resultCovariate += `${str}${i} ~ ${inputCovariate}${i}<br>`;
+                    }
+                    if (i == num) {
+                        resultCovariate += `${str}${i} ~ ${inputCovariate}${i}`;
+                    }
+                }
+            }
+
+            let resultPredictors = "";
+            if (inputPredictors.trim() != "") {
+                       resultPredictors = `#regressions<br>i ~ ${inputPredictors}<br>s ~ ${inputPredictors}`;
+            }
+
+            return `model <- '<br>#${interceptMode} intercept + ${slopeMode} slope<br>${resultIntercept}<br>${resultSlope}<br>${resultPredictors}<br>${resultCovariate}<br>'`;
+
+
+
+
+        }
+
+        function generateString() {
+            const slopeMode = document.getElementById("slopeMode").value;
+            const interceptMode = document.getElementById("interceptMode").value;
+            const slopeShape = document.getElementById("slopeShape").value;
+            const inputStr = document.getElementById("inputStr").value;
+            const inputCovariate = document.getElementById("inputCovariate").value;
+            const inputPredictors = document.getElementById("inputPredictors").value;
+            const inputNum = parseInt(document.getElementById("inputNum").value);
+
+            if (inputStr.trim() === "") {
+                alert("String input is empty. Please enter the name of your outcome.");
+                return; // Exit the function if inputStr is empty
+            }
+
+            if (isNaN(inputNum) || inputNum <= 0) {
+                alert("Invalid number input. Please enter a positive number.");
+                return; // Exit the function if inputNum is not a positive number
+            }
+
+            let resultSlope_string = "";
+            resultSlope_string = createSlopeString(inputStr, inputNum, slopeMode, interceptMode, inputCovariate, slopeShape, inputPredictors);
+            document.getElementById("resultSlope").innerHTML = `${resultSlope_string}`;
+
+
+        }
+    </script>
+</body>
+
+</html>
